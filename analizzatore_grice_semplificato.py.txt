@@ -1,0 +1,93 @@
+# analizzatore_grice_semplificato.py
+# Luigi Usai, Quartucciu, Sardinia, Italy,16 maggio 2025
+
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+import statistics # Per calcolare la media
+
+# Lista (molto limitata) di possibili indicatori di "hedging" (coper-tura/incertezza)
+HEDGING_TERMS = ["credo", "penso", "forse", "magari", "sembra", "parrebbe", "apparentemente", "in un certo senso", "tipo", "cioè", "insomma"]
+
+def analyze_gricean_indicators(text):
+    """
+    Analizza un testo per potenziali indicatori superficiali di violazioni delle massime di Grice.
+    Questo è un analizzatore MOLTO semplificato e non affidabile.
+    """
+    print("--- Analisi Griceana Semplificata ---")
+    print(f"Testo analizzato: \"{text[:100]}...\"" if len(text) > 100 else f"Testo analizzato: \"{text}\"")
+
+    sentences = sent_tokenize(text)
+    num_sentences = len(sentences)
+    print(f"\nNumero di frasi: {num_sentences}")
+
+    if num_sentences == 0:
+        print("Nessuna frase trovata per l'analisi.")
+        return
+
+    all_words = word_tokenize(text)
+    num_words = len(all_words)
+    print(f"Numero totale di parole: {num_words}")
+
+    # Indicatori per la Massima della Quantità e del Modo (Concisezza/Prolissità)
+    sentence_lengths = [len(word_tokenize(s)) for s in sentences]
+
+    if sentence_lengths:
+        avg_sentence_length = statistics.mean(sentence_lengths)
+        print(f"\nLunghezza media delle frasi (parole): {avg_sentence_length:.2f}")
+
+        # Semplici soglie per identificare frasi "troppo lunghe" o "troppo corte"
+        # Queste soglie sono arbitrarie e dipendono dal tipo di testo!
+        long_sentence_threshold = avg_sentence_length * 1.5
+        short_sentence_threshold = avg_sentence_length * 0.5
+
+        potential_quantity_manner_issues = []
+        for i, s in enumerate(sentences):
+            s_len = sentence_lengths[i]
+            if s_len > long_sentence_threshold and s_len > 20: # Frase lunga (potenziale violazione Modo: Prolissità?)
+                 potential_quantity_manner_issues.append(f"Frase {i+1} ({s_len} parole): Potrebbe essere troppo lunga o prolissa. \"{s[:50]}...\"")
+            elif s_len < short_sentence_threshold and s_len < 5: # Frase molto corta (potenziale violazione Quantità: Poco informativo?)
+                 potential_quantity_manner_issues.append(f"Frase {i+1} ({s_len} parole): Potrebbe essere troppo breve o poco informativa. \"{s[:50]}...\"")
+
+        if potential_quantity_manner_issues:
+            print("\nPotenziali problemi di Quantità o Modo (basati sulla lunghezza delle frasi):")
+            for issue in potential_quantity_manner_issues:
+                print(f"- {issue}")
+        else:
+            print("\nLunghezza delle frasi nella norma (secondo questo semplice indicatore).")
+
+    # Ripetizioni semplici (potenziale violazione Quantità: Eccessivamente informativo? o Modo: Non conciso?)
+    # Qui cerchiamo solo parole ripetute immediatamente vicine, un indicatore molto grossolano
+    repeated_words = [all_words[i] for i in range(len(all_words)-1) if all_words[i].lower() == all_words[i+1].lower() and all_words[i].isalpha()]
+    if repeated_words:
+        print(f"\nPotenziali ripetizioni consecutive di parole (indicatore grezzo di Modo/Quantità): {set(repeated_words)}")
+        # Nota: Un'analisi vera richiederebbe il confronto tra frasi e una comprensione della retorica
+
+    # Indicatori per la Massima della Qualità (Incertezza/Hedging - MOLTO LIMITATO)
+    hedging_indicators_found = []
+    words_lower = [w.lower() for w in all_words]
+    for term in HEDGING_TERMS:
+        if term in words_lower:
+            hedging_indicators_found.append(term)
+
+    if hedging_indicators_found:
+        print(f"\nPotenziali indicatori di incertezza/hedging (potenziale rilevanza per la Massima di Qualità): {set(hedging_indicators_found)}")
+        print("(Nota: La presenza di questi termini non significa necessariamente falsità, ma esitazione o mancanza di certezza.)")
+    else:
+        print("\nNessun indicatore superficiale di incertezza/hedging trovato.")
+
+    print("\n--- Analisi Completata (Ricorda le Grandi Limitazioni) ---")
+    print("Una vera analisi Griceana richiede comprensione del contesto, intenzione e common sense.")
+
+
+# --- Esempio di Utilizzo ---
+
+if __name__ == "__main__":
+    dialogue1 = "Ciao! Come stai? Spero tutto bene. Ieri sono andato al mercato, era affollatissimo. Ho comprato delle mele, delle pere e anche delle banane. Banane che sembravano mature, ma non ne sono certissimo."
+    dialogue2 = "L'incontro è andato... bene. Cioè, penso. C'era un sacco di gente, un sacco. Forse dovrei dire di più? No, questo è quanto. È andata... bene."
+    dialogue3 = "La capitale della Francia è Parigi." # Segue le massime
+
+    analyze_gricean_indicators(dialogue1)
+    print("\n" + "="*50 + "\n")
+    analyze_gricean_indicators(dialogue2)
+    print("\n" + "="*50 + "\n")
+    analyze_gricean_indicators(dialogue3)
